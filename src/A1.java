@@ -4,11 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class A1 {
 	private static boolean A[];
+	private static long sumPrimes = 0;
 
 	public static void main(String[] args) {
 		// testing counter
 		if(args.length == 0) {
-			System.out.println("enter the number to stop at (eg: 100)");
+			System.out.println("enter the number to stop at as an argument (eg: java A1 100)");
 			System.exit(0);
 		}
 		final int MAX = Integer.parseInt(args[0]) + 1;
@@ -21,7 +22,11 @@ public class A1 {
 		A[1] = false;
 
 		// solve the problem
-		countPrimes(MAX);
+		long start = System.currentTimeMillis();
+		int totalPrimes = countPrimes(MAX);
+		long finish = System.currentTimeMillis();
+		long elapsed = finish - start;
+		printAnswer(elapsed, totalPrimes, sumPrimes);
 
 		// for debug
 //		System.out.println(Arrays.toString(A));
@@ -38,7 +43,21 @@ public class A1 {
 		*/
 	}
 
-	private static void countPrimes(int max){
+	private static void printAnswer(long elapsed, int totalPrimes, long sumPrimes){
+		System.out.println(((double)elapsed/1000) + "s " + totalPrimes + " " + sumPrimes);
+		int i = A.length-1;
+		int count = 0;
+		while(count < 10){
+			count++;
+			while(!A[i]){
+				i--; // find the first prime
+			}
+			System.out.println(i);
+			i--; // go down one.
+		}
+	}
+
+	private static int countPrimes(int max){
 		Counter c = new Counter(2);
 
 		// create 8 threads
@@ -81,12 +100,19 @@ public class A1 {
 
 		// get total
 		int count = 0;
+		int index = 0;
+		long sum = 0;
 		for (boolean a:A) {
-			if(a) count++;
+			if(a) {
+				count++;
+				sumPrimes += index;
+			}
+			index++;
 		}
 
 		// answer
-		System.out.println("total primes <= " + (max-1) + " is " + count);
+//		System.out.println("total primes <= " + (max-1) + " is " + count);
+		return count;
 	}
 
 	// works on finding primes
