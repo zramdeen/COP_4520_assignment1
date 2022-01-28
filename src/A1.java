@@ -81,11 +81,6 @@ public class A1 {
 
 		// get total
 		int count = 0;
-//		System.out.println(Arrays.toString(A));
-//		int sqrtMax = (int) Math.sqrt(max);
-//		for (int i = 0; i < sqrtMax; i++) {
-//			if(A[i]) count++;
-//		}
 		for (boolean a:A) {
 			if(a) count++;
 		}
@@ -133,23 +128,6 @@ public class A1 {
 		}
 	}
 
-	static class Worker2 implements Runnable {
-		private Queue<Integer> q;
-
-		public Worker2(Queue<Integer> q){
-			this.q = q;
-		}
-
-		@Override
-		public void run() {
-			while(!q.isEmpty()){
-				int item = q.poll();
-
-				// mark off all items
-			}
-		}
-	}
-
 	static class Counter {
 		private AtomicInteger count;
 
@@ -166,5 +144,3 @@ public class A1 {
 		}
 	}
 }
-
-

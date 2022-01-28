@@ -23,4 +23,6 @@ java A1 <int> # enter the max number to check to
 #### Current Progress
 Brute force computes all primes up to the **sqrt** of the specified number **n**.
 
-The program then marks off all multiples of these numbers.
+The program then marks off all multiples of these numbers. Unfortunately I couldn't get this portion synchronized. It kept failing, I even tried a queue and used locks to obtain a value for the thread. For some reason I kept getting errors.
+
+So the program could be more efficient if I could figure out how to parallelize marking off the multiples.
