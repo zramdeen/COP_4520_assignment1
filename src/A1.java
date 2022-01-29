@@ -1,41 +1,54 @@
-import java.util.ArrayList;
+/*=============================================================================
+| Assignment: Calculating prime numbers below N. Parallel version.
+|
+| Author: Zahid Ramdeen
+| Language: Java
+|
+| To Compile: (from terminal)
+| javac A1.java
+|
+| To Execute: (from terminal)
+| java A1 <integer>
+|
+| Class: COP4520 - Concepts of Parallel and Distributed Processing - Spring 2022
+| Instructor: Damian Dechev
+| Due Date: 1/28/2022
+|
++=============================================================================*/
+
 import java.util.Arrays;
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class A1 {
+	// variables for information on primes
 	private static boolean A[];
 	private static long sumPrimes = 0;
 
 	public static void main(String[] args) {
-		// testing counter
+		// obtain command line argument from user.
 		if(args.length == 0) {
 			System.out.println("enter the number to stop at as an argument (eg: java A1 100)");
 			System.exit(0);
 		}
+
+		// ensure the value entered is an integer and is a valid positive number
 		final int MAX = Integer.parseInt(args[0]) + 1;
-		assert(MAX > 2); // ensure the user enters a positive number
+		assert(MAX > 2);
 
 		// setup the array
 		A = new boolean[MAX];
 		Arrays.fill(A, true);
-		A[0] = false;
-		A[1] = false;
+		A[0] = false; // not prime by definition
+		A[1] = false; // not prime by definition
 
 		// solve the problem
 		long start = System.currentTimeMillis();
-		int totalPrimes = countPrimes(MAX);
+		int totalPrimes = countPrimes(MAX); // threaded code in here
 		long finish = System.currentTimeMillis();
 		long elapsed = finish - start;
 		printAnswer(elapsed, totalPrimes, sumPrimes);
-
-		// for debug
-//		System.out.println(Arrays.toString(A));
-
 
 		/*
 			to check
@@ -48,6 +61,12 @@ public class A1 {
 		*/
 	}
 
+	/**
+	 * Prints out the solution in the required format
+	 * @param elapsed duration the threaded code took
+	 * @param totalPrimes total primes under specified value
+	 * @param sumPrimes sum of all primes under specified value
+	 */
 	private static void printAnswer(long elapsed, int totalPrimes, long sumPrimes){
 		System.out.println(((double)elapsed/1000) + "s " + totalPrimes + " " + sumPrimes);
 		int i = A.length-1;
@@ -62,7 +81,14 @@ public class A1 {
 		}
 	}
 
+	/**
+	 * Using 8 concurrent threads compute the primes below "max".
+	 * Also sets the global variable sumPrimes.
+	 * @param max value to compute primes to
+	 * @return count of primes
+	 */
 	private static int countPrimes(int max){
+		// synchronized counter... starts at 2 to prevent the algorithm from overwriting 0,1 as true.
 		Counter c = new Counter(2);
 
 		// create 8 threads
@@ -86,7 +112,7 @@ public class A1 {
 			e.printStackTrace();
 		}
 
-		// queue
+		// enqueue the primes found below sqrt(max)
 		int sqrtMax = (int) Math.sqrt(max);
 		BlockingQueue<Integer> bq = new ArrayBlockingQueue<Integer>(sqrtMax);
 		for (int i = 2; i < sqrtMax; i++) {
@@ -96,7 +122,7 @@ public class A1 {
 			}
 		}
 
-		// dequeue and mark off
+		// dequeue primes found, get threads to mark off all multiples
 		for (int i = 0; i < totalThreads; i++) {
 			tarr[i] = new Thread(new MarkingWorker(bq, max), "t" + i);
 		}
@@ -115,11 +141,9 @@ public class A1 {
 			e.printStackTrace();
 		}
 
-
 		// get total
 		int count = 0;
 		int index = 0;
-		long sum = 0;
 		for (boolean a:A) {
 			if(a) {
 				count++;
@@ -128,12 +152,13 @@ public class A1 {
 			index++;
 		}
 
-		// answer
-//		System.out.println("total primes <= " + (max-1) + " is " + count);
+		// return the count of primes
 		return count;
 	}
 
-	// works on finding primes
+	/**
+	 * Brute force thread for finding primes below the square root of a specific number.
+	 */
 	static class Worker implements Runnable {
 		private final Counter c;
 		private final int MAX;
@@ -145,6 +170,9 @@ public class A1 {
 			this.SQRT_MAX = (int) Math.sqrt(max);
 		}
 
+		/**
+		 * Gets a value from the Atomic Counter and checks if it's prime.
+		 */
 		@Override
 		public void run() {
 			int cur = c.getAndIncrement();
@@ -161,6 +189,11 @@ public class A1 {
 			}
 		}
 
+		/**
+		 * Divisibility check for prime
+		 * @param v number to check
+		 * @return whether the number is prime
+		 */
 		private boolean isPrime(int v){
 			if(v <= 2) return true;
 
@@ -172,7 +205,10 @@ public class A1 {
 		}
 	}
 
-	// worker for marking off primes
+	/**
+	 * Thread for marking off primes using a blocking queue.
+	 * Each thread obtains a prime number and marks off multiples in parallel.
+	 */
 	static class MarkingWorker implements Runnable {
 		private BlockingQueue<Integer> bq = null;
 		private final int max;
@@ -182,6 +218,11 @@ public class A1 {
 			this.max = max;
 		}
 
+		/**
+		 * Obtains a prime (integer) from the blocking queue.
+		 * Marks off all multiples of the number.
+		 * Exits when queue is empty.
+		 */
 		@Override
 		public void run() {
 			while(true){
@@ -206,6 +247,9 @@ public class A1 {
 		}
 	}
 
+	/**
+	 * Atomic Counter used for synchronizing threads in the brute-force portion of the algorithm
+	 */
 	static class Counter {
 		private AtomicInteger count;
 
@@ -213,10 +257,18 @@ public class A1 {
 			count = new AtomicInteger(initial);
 		}
 
+		/**
+		 * Atomic increment operation.
+		 * @return value before increment.
+		 */
 		public int getAndIncrement(){
 			return count.getAndIncrement();
 		}
 
+		/**
+		 * Atomic get
+		 * @return current value
+		 */
 		public int getValue(){
 			return count.get();
 		}

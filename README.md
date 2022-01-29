@@ -1,6 +1,7 @@
 # Assignment 1
 
 #### Compiler Information
+I coded this program on a windows machine.
 ```bash
 # java --version
 java 17.0.2 2022-01-18 LTS
@@ -14,15 +15,10 @@ javac 17.0.2
 #### Build instructions
 ```bash
 # compile
-javac A1.java
+javac A1.java # parallel version
+javac A1Sync.java #sync version
 
 # run
 java A1 <int> # enter the max number to check to
+java A1Sync <int> # enter the number to check to
 ```
-
-#### Current Progress
-Brute force computes all primes up to the **sqrt** of the specified number **n**.
-
-The program then marks off all multiples of these numbers. Unfortunately I couldn't get this portion synchronized. It kept failing, I even tried a queue and used locks to obtain a value for the thread. For some reason I kept getting errors.
-
-So the program could be more efficient if I could figure out how to parallelize marking off the multiples.
