@@ -1,6 +1,11 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class A1 {
 	private static boolean A[];
@@ -36,7 +41,7 @@ public class A1 {
 			to check
 			100 				-> 25
 			1,000 			-> 168
-			10,000			-> 1,229
+			10,000			-> 1,229   <--- sqrt of 100 million
 			1,000,000 	-> 78,498
 			10,000,000	-> 664,579
 			100,000,000	-> 5,761,455
@@ -81,22 +86,35 @@ public class A1 {
 			e.printStackTrace();
 		}
 
-		// mark off remaining primes
+		// queue
 		int sqrtMax = (int) Math.sqrt(max);
+		BlockingQueue<Integer> bq = new ArrayBlockingQueue<Integer>(sqrtMax);
 		for (int i = 2; i < sqrtMax; i++) {
 			// find a prime
-			if(A[i]){
-				// mark off all multiples (should start after sqrt max but w/e)
-				int j = 0;
-				int squared = i*i;
-				int next = squared;
-				while(next < max){
-					A[next] = false;
-					j++;
-					next = squared + i*j;
-				}
+			if (A[i]) {
+				bq.add(i); // add to the queue
 			}
 		}
+
+		// dequeue and mark off
+		for (int i = 0; i < totalThreads; i++) {
+			tarr[i] = new Thread(new MarkingWorker(bq, max), "t" + i);
+		}
+
+		// start threads
+		for (Thread t : tarr) {
+			t.start();
+		}
+
+		// force main thread to wait for child threads to finish
+		try {
+			for (Thread t : tarr) {
+				t.join();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 
 		// get total
 		int count = 0;
@@ -151,6 +169,40 @@ public class A1 {
 				if(v % i == 0) return false;
 			}
 			return true;
+		}
+	}
+
+	// worker for marking off primes
+	static class MarkingWorker implements Runnable {
+		private BlockingQueue<Integer> bq = null;
+		private final int max;
+
+		public MarkingWorker(BlockingQueue bq, int max){
+			this.bq = bq;
+			this.max = max;
+		}
+
+		@Override
+		public void run() {
+			while(true){
+				Integer i = bq.poll();
+
+				// no work left to do.
+				if(null == i){
+					return;
+				}
+
+				// mark off all multiples
+				int squared = i*i;
+				int j = 0;
+				int next = squared + (j*i);
+				while(next < max){
+					A[next] = false;
+					j++;
+					next = squared + (j*i);
+				}
+			}
+
 		}
 	}
 
