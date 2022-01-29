@@ -213,7 +213,7 @@ public class A1 {
 		private BlockingQueue<Integer> bq = null;
 		private final int max;
 
-		public MarkingWorker(BlockingQueue bq, int max){
+		public MarkingWorker(BlockingQueue<Integer> bq, int max){
 			this.bq = bq;
 			this.max = max;
 		}
